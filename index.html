@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecureTx Lab | Replay Attack Demonstration & Prevention</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css?v=workstation-modal" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#lab" aria-label="SecureTx Lab home">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span class="brand-copy">
+            <strong>SECURETX LAB</strong>
+            <span>Replay Attack Demonstration &amp; Prevention</span>
+            <small>BCS703 · Cryptography &amp; Network Security</small>
+          </span>
+        </a>
+        <div class="status-box status-protected" id="statusBox" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="systemStatusText">LAB PROTECTED</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="lab-section" id="lab" aria-labelledby="labTitle">
+          <div class="lab-heading">
+            <div>
+              <p class="eyebrow">ISOLATED NETWORK · LIVE SIMULATION</p>
+              <h1 id="labTitle">Transaction security lab</h1>
+            </div>
+            <p class="lab-hint" id="stationHint"><span class="live-indicator"></span> Select a workstation to inspect its activity</p>
+          </div>
+
+          <div class="lab-scene flow-scene" id="flowScene" data-state="idle">
+            <div class="scene-backdrop" aria-hidden="true">
+              <span class="room-light room-light-left"></span>
+              <span class="room-light room-light-right"></span>
+              <span class="network-rail"></span>
+            </div>
+            <div class="transaction-packet" id="transactionPacket" aria-hidden="true">AUTH · HMAC</div>
+
+            <div class="workstation-grid">
+              <article class="workstation is-active" data-workstation="sender" tabindex="0" role="group" aria-label="Sender workstation. Focus, hover, or select to inspect.">
+                <div class="station-heading">
+                  <span class="station-number">01</span>
+                  <div><h2>SENDER PC</h2><p>Origin · Transaction signing</p></div>
+                  <span class="station-led led-blue" aria-label="Online"></span>
+                </div>
+                <div class="monitor-shell">
+                  <div class="monitor-screen">
+                    <div class="screen-bar"><span class="screen-dots"><i></i><i></i><i></i></span><span>SENDER TERMINAL</span><span class="screen-live">LOCAL</span></div>
+                    <div class="screen-body">
+                      <p class="terminal-prompt">&gt; Creating authenticated transaction</p>
+                      <dl class="terminal-data">
+                        <div><dt>MESSAGE</dt><dd id="displayMessage">—</dd></div>
+                        <div><dt>TIMESTAMP</dt><dd id="displayTimestamp">—</dd></div>
+                        <div><dt>NONCE</dt><dd id="displayNonce" class="mono">—</dd></div>
+                        <div><dt>HMAC-SHA256</dt><dd id="displayHmac" class="mono">—</dd></div>
+                      </dl>
+                      <div class="terminal-status"><span class="screen-led"></span><span id="senderStatus">AWAITING TRANSACTION</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="monitor-stand" aria-hidden="true"><span></span></div>
+                <div class="desk-surface" aria-hidden="true"><span class="keyboard"></span><span class="mouse"></span></div>
+                <div class="station-foot"><span>01 / ORIGIN</span><span class="stage-label" data-stage-label="sender">Create &amp; authenticate</span></div>
+              </article>
+
+              <article class="workstation" data-workstation="attacker" tabindex="0" role="group" aria-label="Attacker workstation. Focus, hover, or select to inspect.">
+                <div class="station-heading">
+                  <span class="station-number">02</span>
+                  <div><h2>ATTACKER PC</h2><p>Network tap · Capture / replay</p></div>
+                  <span class="station-led led-amber" aria-label="Monitoring"></span>
+                </div>
+                <div class="monitor-shell">
+                  <div class="monitor-screen attacker-screen">
+                    <div class="screen-bar"><span class="screen-dots"><i></i><i></i><i></i></span><span>TRAFFIC INTERCEPT</span><span class="screen-live amber-text">TAP 01</span></div>
+                    <div class="screen-body">
+                      <p class="terminal-prompt amber-text">&gt; Listening for signed packets...</p>
+                      <dl class="terminal-data">
+                        <div><dt>CAPTURED MESSAGE</dt><dd id="attackerMessage">No packet captured</dd></div>
+                        <div><dt>TIME / NONCE</dt><dd id="attackerTimestamp" class="mono">—</dd></div>
+                        <div><dt>NONCE ID</dt><dd id="attackerNonce" class="mono">—</dd></div>
+                        <div><dt>AUTH TAG</dt><dd id="attackerHmac" class="mono">—</dd></div>
+                      </dl>
+                      <div class="terminal-status"><span class="screen-led amber-led"></span><span id="attackerStatus">SNIFFER STANDBY</span></div>
+                      <button id="attackerReplayBtn" class="screen-action" type="button" disabled>Replay captured packet</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="monitor-stand" aria-hidden="true"><span></span></div>
+                <div class="desk-surface" aria-hidden="true"><span class="keyboard"></span><span class="mouse"></span></div>
+                <div class="station-foot"><span>02 / ADVERSARY</span><span class="stage-label" data-stage-label="attacker">Capture &amp; replay</span></div>
+              </article>
+
+              <article class="workstation" data-workstation="receiver" tabindex="0" role="group" aria-label="Receiver workstation. Focus, hover, or select to inspect.">
+                <div class="station-heading">
+                  <span class="station-number">03</span>
+                  <div><h2>RECEIVER PC</h2><p>Destination · Verification</p></div>
+                  <span class="station-led led-green" aria-label="Online"></span>
+                </div>
+                <div class="monitor-shell">
+                  <div class="monitor-screen receiver-screen">
+                    <div class="screen-bar"><span class="screen-dots"><i></i><i></i><i></i></span><span>RECEIVER VERIFICATION</span><span class="screen-live green-text">GUARD</span></div>
+                    <div class="screen-body">
+                      <p class="terminal-prompt">&gt; Incoming transaction / policy R-10</p>
+                      <div class="receiver-checks">
+                        <div><span>TIMESTAMP</span><span id="timestampCheck" class="check-state neutral">—</span></div>
+                        <div><span>NONCE</span><span id="nonceCheck" class="check-state neutral">—</span></div>
+                        <div><span>HMAC-SHA256</span><span id="hmacCheck" class="check-state neutral">—</span></div>
+                      </div>
+                      <div class="receiver-result"><span>DECISION</span><strong id="finalDecision" class="decision-neutral">AWAITING PACKET</strong></div>
+                      <p class="receiver-reason" id="receiverReason">No transaction received.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="monitor-stand" aria-hidden="true"><span></span></div>
+                <div class="desk-surface" aria-hidden="true"><span class="keyboard"></span><span class="mouse"></span></div>
+                <div class="station-foot"><span>03 / DESTINATION</span><span class="stage-label" data-stage-label="receiver">Inspect &amp; decide</span></div>
+              </article>
+            </div>
+
+            <div class="core-connector" aria-hidden="true"><span></span></div>
+            <section class="network-core" aria-label="Main network core">
+              <div class="core-topline"><span class="core-led"></span><span>ISOLATED LAB NETWORK</span><span class="core-id">CORE / 01</span></div>
+              <div class="core-main">
+                <div class="core-title"><span class="core-mark" aria-hidden="true">N</span><div><p class="eyebrow">MAIN</p><h2>NETWORK CORE</h2></div></div>
+                <p class="core-description">Packet routing &amp; replay observation</p>
+                <div class="core-telemetry" aria-live="polite">
+                  <div><span>TRAFFIC</span><strong id="coreTraffic">IDLE</strong></div>
+                  <div><span>PACKET</span><strong id="corePacket">NONE</strong></div>
+                  <div><span>POLICY</span><strong>HMAC · NONCE · 10S</strong></div>
+                </div>
+              </div>
+              <div class="core-bottomline"><span>SEGMENT 10.0.0.0/24</span><span><i></i> MONITORING ACTIVE</span></div>
+            </section>
+
+            <div class="scene-caption" aria-live="polite"><span class="caption-index">STAGE</span><p id="flowSummary">Waiting for a valid transaction to be created.</p></div>
+          </div>
+
+          <ol class="process-rail" aria-label="Simulation stages">
+            <li class="is-current" data-process-stage="create"><span>01</span><b>CREATE</b></li>
+            <li data-process-stage="authenticate"><span>02</span><b>AUTHENTICATE</b></li>
+            <li data-process-stage="capture"><span>03</span><b>CAPTURE</b></li>
+            <li data-process-stage="replay"><span>04</span><b>REPLAY</b></li>
+            <li data-process-stage="verify"><span>05</span><b>VERIFY</b></li>
+            <li data-process-stage="result"><span>06</span><b>RESULT</b></li>
+          </ol>
+        </section>
+
+        <section class="control-bay" aria-label="Lab controls">
+          <div class="control-intro"><p class="eyebrow">OPERATOR CONSOLE</p><h2>Run a scenario</h2><p>Generate a signed packet, then inspect how each station handles it.</p></div>
+          <div class="control-fields">
+            <label><span>Transaction message</span><input id="messageInput" type="text" value="Transfer Rs.500 to Bob" /></label>
+            <label><span>Shared secret</span><input id="secretInput" type="text" value="my_secure_shared_key" /></label>
+          </div>
+          <div class="control-actions">
+            <button id="generateBtn" class="primary-btn" type="button">Generate</button>
+            <button id="sendBtn" class="secondary-btn" type="button" disabled>Send transaction</button>
+            <button id="replayBtn" class="warning-btn" type="button" disabled>Replay transaction</button>
+            <button id="modifyBtn" class="secondary-btn" type="button" disabled>Modify message</button>
+            <button id="expiredBtn" class="secondary-btn" type="button" disabled>Expire transaction</button>
+            <button id="newTxBtn" class="secondary-btn" type="button" disabled>New valid transaction</button>
+            <button id="resetBtn" class="text-btn" type="button">Reset lab</button>
+          </div>
+        </section>
+
+        <section class="readouts" aria-label="Simulation records">
+          <details class="readout-panel" open>
+            <summary><span>Scenario tests</span><span class="readout-count">05 CASES</span></summary>
+            <div class="test-table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>Scenario</th><th>Expected receiver result</th><th>Run</th></tr></thead>
+                <tbody>
+                  <tr data-test="normal"><td>01</td><td>Normal authenticated transaction</td><td>Accepted</td><td><button class="run-test-btn" type="button">Run</button></td></tr>
+                  <tr data-test="replay"><td>02</td><td>Same captured transaction submitted again</td><td>Replay rejected</td><td><button class="run-test-btn" type="button">Run</button></td></tr>
+                  <tr data-test="modified"><td>03</td><td>Message changed, original HMAC retained</td><td>Authentication rejected</td><td><button class="run-test-btn" type="button">Run</button></td></tr>
+                  <tr data-test="expired"><td>04</td><td>Timestamp outside 10-second window</td><td>Expired</td><td><button class="run-test-btn" type="button">Run</button></td></tr>
+                  <tr data-test="newTx"><td>05</td><td>New message and unique nonce</td><td>Accepted</td><td><button class="run-test-btn" type="button">Run</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+          <section class="readout-panel log-panel" aria-labelledby="logTitle">
+            <div class="readout-heading"><h2 id="logTitle">Live verification log</h2><span class="readout-count">EVENT STREAM</span></div>
+            <div class="log-window" id="verificationLog" aria-live="polite" aria-relevant="additions text"><div>[00:00:00] Laboratory ready</div></div>
+          </section>
+        </section>
+      </main>
+
+      <dialog id="stationDialog" class="station-dialog" aria-labelledby="stationDialogTitle">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">ENLARGED WORKSTATION VIEW</p><h2 id="stationDialogTitle">Workstation</h2></div>
+          <button id="closeStationDialog" class="dialog-close" type="button" aria-label="Close enlarged workstation">×</button>
+        </div>
+        <div id="stationDialogScreen" class="station-dialog-screen"></div>
+      </dialog>
+
+      <footer class="page-footer"><span>SECURETX LAB</span><span>BCS703 · Cryptography &amp; Network Security</span><span>GROUP NO. 23</span></footer>
+    </div>
+    <script src="script.js?v=workstation-modal"></script>
+  </body>
+</html>
