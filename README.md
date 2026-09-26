@@ -13,7 +13,6 @@ An interactive cybersecurity lab where signed transactions move between a sender
 
 **BCS703 · Cryptography &amp; Network Security**
 
-[View the GitHub repository](https://github.com/vikki123224v/SecureTX-Lab)
 
 </div>
 
